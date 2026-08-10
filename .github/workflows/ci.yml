@@ -1,4 +1,3 @@
-```yaml
 name: CI/CD Pipeline
 
 on:
@@ -10,6 +9,10 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
 
     services:
       postgres:
@@ -25,10 +28,6 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -46,28 +45,25 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
-          source .venv/bin/activate
-          uv sync --dev
+          uv pip install -e .
+          uv pip install ruff black pytest pytest-cov httpx
 
       - name: Run Ruff
         run: |
-          source .venv/bin/activate
-          ruff check .
+          uv run ruff check .
 
       - name: Run Black
         run: |
-          source .venv/bin/activate
-          black --check --target-version py312 .
+          uv run black --check --target-version py312 .
 
       - name: Run tests
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
           SECRET_KEY: test_secret_key
         run: |
-          source .venv/bin/activate
-          pytest tests/ -v --cov=. --cov-report=xml
+          uv run pytest tests/ -v --cov=. --cov-report=xml
 
-    docker:
+  docker:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
