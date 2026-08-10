@@ -1,16 +1,16 @@
-from sqlmodel import SQLModel, Field
-from typing import Optional
-from datetime import datetime
-from pydantic import field_validator
 import re
+from datetime import datetime
 
+from pydantic import field_validator
+from sqlmodel import Field, SQLModel
 
 # ============================================================
 # Supplier Model
 # ============================================================
 
+
 class Supplier(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
     contact_person: str
     email: str = Field(unique=True)
@@ -22,8 +22,9 @@ class Supplier(SQLModel, table=True):
 # Product Model
 # ============================================================
 
+
 class Product(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
 
     name: str = Field(index=True)
     description: str
@@ -40,10 +41,7 @@ class Product(SQLModel, table=True):
 
     sku: str = Field(unique=True, index=True)
 
-    supplier_id: Optional[int] = Field(
-        default=None,
-        foreign_key="supplier.id"
-    )
+    supplier_id: int | None = Field(default=None, foreign_key="supplier.id")
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -54,20 +52,24 @@ class Product(SQLModel, table=True):
 # Product Create Model
 # ============================================================
 
+
 class ProductCreate(SQLModel):
     name: str
     description: str
     brand: str
     category: str
-    price: float
-    stock: int
-    warranty_months: int
+    price: float = Field(gt=0)
+    stock: int = Field(ge=0)
+    warranty_months: int = Field(ge=0)
     sku: str
-    supplier_id: Optional[int] = None
+    supplier_id: int | None = None
 
     @field_validator("name")
     @classmethod
     def validate_name(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Name cannot be empty")
+
         if not v[0].isupper():
             raise ValueError("Name must start with a capital letter")
 
@@ -79,7 +81,6 @@ class ProductCreate(SQLModel):
     @field_validator("brand")
     @classmethod
     def validate_brand(cls, v):
-
         allowed = [
             "HP",
             "Dell",
@@ -90,7 +91,7 @@ class ProductCreate(SQLModel):
             "AMD",
             "Corsair",
             "Logitech",
-            "Other"
+            "Other",
         ]
 
         for brand in allowed:
@@ -102,7 +103,6 @@ class ProductCreate(SQLModel):
     @field_validator("category")
     @classmethod
     def validate_category(cls, v):
-
         allowed = [
             "Laptops",
             "Monitors",
@@ -111,7 +111,7 @@ class ProductCreate(SQLModel):
             "Memory",
             "Keyboards",
             "Mice",
-            "Accessories"
+            "Accessories",
         ]
 
         for category in allowed:
@@ -123,7 +123,6 @@ class ProductCreate(SQLModel):
     @field_validator("price")
     @classmethod
     def validate_price(cls, v):
-
         if round(v, 2) != v:
             raise ValueError("Price must have at most 2 decimal places")
 
@@ -134,25 +133,16 @@ class ProductCreate(SQLModel):
             raise ValueError("Maximum price is 500000")
 
         return round(v, 2)
+
     @field_validator("sku")
     @classmethod
     def validate_sku(cls, v):
-
         pattern = r"^[A-Z]{3,4}-[A-Z]{2,4}-[0-9]{4}$"
 
         if not re.match(pattern, v):
             raise ValueError("SKU must follow CAT-BRAND-0000 format")
 
-        valid_prefixes = [
-            "LAP",
-            "MON",
-            "STO",
-            "PRO",
-            "MEM",
-            "KEY",
-            "MOU",
-            "ACC",
-        ]
+        valid_prefixes = ["LAP", "MON", "STO", "PRO", "MEM", "KEY", "MOU", "ACC"]
 
         prefix = v.split("-")[0]
 
@@ -161,30 +151,30 @@ class ProductCreate(SQLModel):
 
         return v
 
-@field_validator("warranty_months")
-@classmethod
-def validate_warranty(cls, v):
+    @field_validator("warranty_months")
+    @classmethod
+    def validate_warranty(cls, v):
+        if v < 0 or v > 36:
+            raise ValueError("Warranty must be between 0 and 36 months")
 
-    if v < 0 or v > 36:
-        raise ValueError("Warranty must be between 0 and 36 months")
-
-    return v
+        return v
 
 
 # ============================================================
 # Product Update Model
 # ============================================================
 
+
 class ProductUpdate(SQLModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    brand: Optional[str] = None
-    category: Optional[str] = None
-    price: Optional[float] = None
-    stock: Optional[int] = None
-    warranty_months: Optional[int] = None
-    sku: Optional[str] = None
-    supplier_id: Optional[int] = None
+    name: str | None = None
+    description: str | None = None
+    brand: str | None = None
+    category: str | None = None
+    price: float | None = None
+    stock: int | None = None
+    warranty_months: int | None = None
+    sku: str | None = None
+    supplier_id: int | None = None
 
 
 # ============================================================
@@ -194,6 +184,7 @@ class ProductUpdate(SQLModel):
 # ============================================================
 # Supplier Create Model
 # ============================================================
+
 
 class SupplierCreate(SQLModel):
 
@@ -203,18 +194,16 @@ class SupplierCreate(SQLModel):
     phone: str
     is_active: bool = True
 
-
     @field_validator("email")
     @classmethod
     def validate_email(cls, v):
 
-        pattern = r'^[\w\.-]+@[\w\.-]+\.\w+$'
+        pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
         if not re.match(pattern, v):
             raise ValueError("Invalid email address")
 
         return v.lower()
-
 
     @field_validator("phone")
     @classmethod
@@ -227,9 +216,13 @@ class SupplierCreate(SQLModel):
             raise ValueError("Phone number must be at least 10 digits")
 
         return v
+
     # ============================================================
+
+
 # Stock Adjustment Model
 # ============================================================
+
 
 class StockAdjustment(SQLModel):
     product_id: int

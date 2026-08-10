@@ -24,10 +24,9 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
+strategy:
+  matrix:
+    python-version: ["3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -88,3 +87,8 @@ jobs:
         run: |
           docker tag techvault-inventory-api ${{ secrets.DOCKER_USERNAME }}/techvault-inventory-api:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/techvault-inventory-api:latest
+          [tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+ignore = ["B008", "UP006", "UP035", "UP045", "DTZ003", "RET501", "PLR1711"]

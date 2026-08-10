@@ -4,7 +4,23 @@ __pycache__/
 build/
 dist/
 wheels/
-*.egg-info
+*.egg-info/
 
-# Virtual environments
-.venv
+# Virtual environment
+.venv/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Test coverage
+.coverage
+.coverage.*
+htmlcov/
+
+# IDE
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
