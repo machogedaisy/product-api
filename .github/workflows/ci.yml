@@ -1,3 +1,4 @@
+```yaml
 name: CI/CD Pipeline
 
 on:
@@ -24,9 +25,10 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-strategy:
-  matrix:
-    python-version: ["3.13"]
+
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
 
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +57,7 @@ strategy:
       - name: Run Black
         run: |
           source .venv/bin/activate
-          black --check .
+          black --check --target-version py312 .
 
       - name: Run tests
         env:
@@ -65,7 +67,7 @@ strategy:
           source .venv/bin/activate
           pytest tests/ -v --cov=. --cov-report=xml
 
-  docker:
+    docker:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/master'
@@ -87,8 +89,3 @@ strategy:
         run: |
           docker tag techvault-inventory-api ${{ secrets.DOCKER_USERNAME }}/techvault-inventory-api:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/techvault-inventory-api:latest
-          [tool.ruff]
-line-length = 88
-
-[tool.ruff.lint]
-ignore = ["B008", "UP006", "UP035", "UP045", "DTZ003", "RET501", "PLR1711"]
