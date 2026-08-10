@@ -31,3 +31,7 @@ ignore = ["B008", "DTZ003"]
 
 [tool.ruff.lint.per-file-ignores]
 "models/__init__.py" = ["F401"]
+
+[tool.setuptools.packages.find]
+include = ["models*", "database*"]
+exclude = ["screenshots*", "tests*"]
