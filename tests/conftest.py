@@ -1,10 +1,18 @@
+import os
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
+# Give the application a safe database URL during tests.
+# This prevents the application from trying to connect to PostgreSQL
+# before the test database is configured.
+os.environ.setdefault("DATABASE_URL", "sqlite://")
+
 import main
 from main import app, get_session
+
 
 TEST_DATABASE_URL = "sqlite://"
 
